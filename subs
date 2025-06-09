@@ -1,0 +1,33 @@
+#!/bin/bash 
+
+RED='\e[1;31m'
+GREEN='\e[1;32m'
+YELLOW='\e[1;33m'
+RESET='\e[0m'
+
+domain=$1
+recon_dir="./$1"
+mkdir -p $recon_dir
+
+echo -e "${RED}---SUBFINDER---${RESET}"
+subfinder -d $1 -silent | anew $recon_dir/subs.txt
+
+echo -e "${GREEN}---ASSETFINDER---${RESET}"
+assetfinder -subs-only $1 | anew $recon_dir/subs.txt
+
+# Add crt.sh domain fetching and processing
+echo -e "${YELLOW}---CRT.SH---${RESET}"
+curl -s "https://crt.sh/?q=%25.${domain}&output=json" | jq -r '.[].name_value' | sed 's/\*\.//g' | sort -u | anew $recon_dir/subs.txt
+
+# Check which domains are alive on specific ports
+cat $recon_dir/subs.txt | httpx -silent -p 8080,8000,5000,80,443 | anew $recon_dir/alive.txt
+
+totalcount=$(wc -l < $recon_dir/subs.txt)
+alivecount=$(wc -l < $recon_dir/alive.txt)
+
+#Detailed httpx
+cat $recon_dir/alive.txt |httpx -sc -title -server -td | tee $recon_dir/httpx
+
+echo -e "${YELLOW}Automation is completed"
+echo -e "Found domain number is: $totalcount"
+echo -e "Alive domain number is: $alivecount ${RESET}"
