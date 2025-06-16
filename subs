@@ -28,6 +28,17 @@ alivecount=$(wc -l < $recon_dir/alive.txt)
 #Detailed httpx
 cat $recon_dir/alive.txt |httpx -sc -title -server -td | tee $recon_dir/httpx
 
+
+#wayback for all alives
+echo -e "${RED}---WAYBACKING---${RESET}"
+
+for i in $(cat $recon_dir/alive.txt)
+do
+echo $i | waybackurls | tee $recon_dir/wayback
+done
+
+cat $recon_dir/wayback | anew > $recon_dir/wayback
+
 echo -e "${YELLOW}Automation is completed"
 echo -e "Found domain number is: $totalcount"
 echo -e "Alive domain number is: $alivecount ${RESET}"
